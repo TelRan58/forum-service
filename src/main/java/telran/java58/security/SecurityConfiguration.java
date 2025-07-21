@@ -23,10 +23,12 @@ public class SecurityConfiguration {
                     .permitAll()
                 .requestMatchers("/account/user/{login}/role/{role}")
                     .hasRole(Role.ADMINISTRATOR.name())
-                .requestMatchers(HttpMethod.PATCH, "/account/user/{login}")
+                .requestMatchers(HttpMethod.PATCH, "/account/user/{login}", "/forum/post/{id}/comment/{login}")
                     .access(new WebExpressionAuthorizationManager("#login == authentication.name"))
                 .requestMatchers(HttpMethod.DELETE, "/account/user/{login}")
                     .access(new WebExpressionAuthorizationManager("#login == authentication.name or hasRole('ADMINISTRATOR')"))
+                .requestMatchers(HttpMethod.POST, "/forum/post/{author}")
+                    .access(new WebExpressionAuthorizationManager("#author == authentication.name"))
                 .anyRequest()
                     .authenticated()
         );
