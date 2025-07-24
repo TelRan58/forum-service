@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import telran.java58.accounting.model.Role;
 
 @Configuration
@@ -19,9 +20,10 @@ public class SecurityConfiguration {
     private final CustomWebSecurity webSecurity;
 
     @Bean
-    SecurityFilterChain getSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain getSecurityFilterChain(HttpSecurity http, ExpiredPasswordFilter expiredPasswordFilter) throws Exception {
         http.httpBasic(Customizer.withDefaults());
         http.csrf(csrf -> csrf.disable());
+        http.addFilterAfter(expiredPasswordFilter, BasicAuthenticationFilter.class);
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/account/register", "/forum/posts/**")
                     .permitAll()
@@ -47,5 +49,10 @@ public class SecurityConfiguration {
                     .authenticated()
         );
         return http.build();
+    }
+
+    @Bean
+    ExpiredPasswordFilter getExpiredPasswordFilter(){
+        return new ExpiredPasswordFilter();
     }
 }

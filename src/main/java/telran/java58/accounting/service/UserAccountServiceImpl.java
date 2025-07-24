@@ -3,8 +3,8 @@ package telran.java58.accounting.service;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import telran.java58.accounting.dao.UserAccountRepository;
@@ -18,12 +18,16 @@ import telran.java58.accounting.dto.exception.UserNotFoundException;
 import telran.java58.accounting.model.Role;
 import telran.java58.accounting.model.UserAccount;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 public class UserAccountServiceImpl implements UserAccountService, CommandLineRunner {
     private final UserAccountRepository userAccountRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
+    @Value("${password.period:30}")
+    private long passwordPeriod;
 
     @Override
     public UserDto register(UserRegisterDto userRegisterDto) {
@@ -34,6 +38,7 @@ public class UserAccountServiceImpl implements UserAccountService, CommandLineRu
         userAccount.addRole("USER");
         String password = passwordEncoder.encode(userRegisterDto.getPassword());
         userAccount.setPassword(password);
+        userAccount.setPasswordExpDate(LocalDate.now().plusDays(passwordPeriod));
         userAccountRepository.save(userAccount);
         return modelMapper.map(userAccount, UserDto.class);
     }
@@ -85,6 +90,7 @@ public class UserAccountServiceImpl implements UserAccountService, CommandLineRu
         UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
         String hashedPassword = passwordEncoder.encode(newPassword);
         userAccount.setPassword(hashedPassword);
+        userAccount.setPasswordExpDate(LocalDate.now().plusDays(passwordPeriod));
         userAccountRepository.save(userAccount);
     }
 
@@ -99,6 +105,7 @@ public class UserAccountServiceImpl implements UserAccountService, CommandLineRu
                     .role(Role.USER)
                     .role(Role.MODERATOR)
                     .role(Role.ADMINISTRATOR)
+                    .passwordExpDate(LocalDate.now().plusDays(passwordPeriod))
                     .build();
             userAccountRepository.save(admin);
         }

@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import telran.java58.accounting.dao.UserAccountRepository;
 import telran.java58.accounting.model.UserAccount;
 
+import java.time.LocalDate;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +25,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Collection<String> roles = user.getRoles()
                 .stream()
                 .map(r -> "ROLE_" + r.name())
-                .toList();
+                .collect(Collectors.toList());
+        if(user.getPasswordExpDate().isBefore(LocalDate.now())){
+            roles.add("ROLE_PASSWORD_EXPIRED");
+        }
         return new User(username, user.getPassword(), AuthorityUtils.createAuthorityList(roles));
     }
 }
